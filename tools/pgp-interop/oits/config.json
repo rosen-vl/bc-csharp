@@ -1,0 +1,33 @@
+{
+  "drivers": [
+    {
+      "path": "/sops/bcsop"
+    },
+    {
+      "id": "{version}+pqc",
+      "path": "/sops/sqop-pqc"
+    },
+    {
+      "path": "/sops/rsop"
+    },
+    {
+      "id": "{version}+pqc",
+      "path": "/sops/gosop-pqc"
+    },
+    {
+      "id": "{version}+psk",
+      "path": "/sops/sop-openpgpjs/sopenpgpjs",
+      "env": {
+        "OPENPGPJS_PATH": "/sops/openpgpjs-psk",
+        "OPENPGPJS_CUSTOM_PROFILES": "{ \"generate-key\": { \"rfc9980\": { \"description\": \"generate v6 PQC keys using ML-DSA-65+Ed25519/ML-KEM-768+X25519\", \"options\": { \"type\": \"pqc\", \"config\": { \"v6Keys\": true } } } } }"
+      }
+    },
+    {
+      "path": "/sops/pgpainless-cli"
+    }
+  ],
+  "rlimits": {
+    "CPU": 60,
+    "DATA": 17179869184
+  }
+}

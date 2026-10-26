@@ -176,6 +176,53 @@ namespace Org.BouncyCastle.Bcpg.OpenPgp.Tests
         }
 
         [Test]
+        public void PreferredAeadAlgorithmsOfOddLengthStillParse()
+        {
+            // an odd number of octets cannot be a list of pairs, but must not make the subpacket unreadable
+            var odd = new PreferredAlgorithms(SignatureSubpacketTag.PreferredAeadAlgorithms, false, isLongLength: false,
+                new byte[]{ 0x09, 0x02, 0x09 });
+            var bOut = new MemoryStream();
+            odd.Encode(bOut);
+
+            SignatureSubpacket parsed = new SignatureSubpacketsParser(new MemoryStream(bOut.ToArray(), false))
+                .ReadPacket();
+
+            Assert.That(parsed, Is.Not.InstanceOf<PreferredAeadCiphersuites>());
+            Assert.That(parsed, Is.InstanceOf<PreferredAlgorithms>());
+            Assert.That(((PreferredAlgorithms)parsed).GetPreferences(), Is.EqualTo(new[]{ 9, 2, 9 }));
+
+            // and it is reported as absent by the vector
+            var vector = new PgpSignatureSubpacketVector(new[]{ parsed });
+            Assert.That(vector.GetPreferredAeadCiphersuites(), Is.Null);
+            Assert.That(vector.GetPreferredAeadAlgorithms(), Is.EqualTo(new[]{ 9, 2, 9 }));
+        }
+
+        [Test]
+        public void PreferredAeadCiphersuitesOfSixPairs()
+        {
+            // the list in the self-signatures made by rsop
+            var combinations = new[]
+            {
+                new PreferredAeadCiphersuites.Combination(SymmetricKeyAlgorithmTag.Aes256, AeadAlgorithmTag.Ocb),
+                new PreferredAeadCiphersuites.Combination(SymmetricKeyAlgorithmTag.Aes192, AeadAlgorithmTag.Ocb),
+                new PreferredAeadCiphersuites.Combination(SymmetricKeyAlgorithmTag.Aes128, AeadAlgorithmTag.Ocb),
+                new PreferredAeadCiphersuites.Combination(SymmetricKeyAlgorithmTag.Aes256, AeadAlgorithmTag.Eax),
+                new PreferredAeadCiphersuites.Combination(SymmetricKeyAlgorithmTag.Aes192, AeadAlgorithmTag.Eax),
+                new PreferredAeadCiphersuites.Combination(SymmetricKeyAlgorithmTag.Aes128, AeadAlgorithmTag.Eax),
+            };
+
+            var generator = new PgpSignatureSubpacketGenerator();
+            generator.SetPreferredAeadCiphersuites(false, combinations);
+            PgpSignatureSubpacketVector vector = generator.Generate();
+
+            var parsed = vector.GetPreferredAeadCiphersuites();
+            Assert.That(parsed, Is.Not.Null);
+            Assert.That(parsed.GetRawAlgorithms(), Is.EqualTo(combinations));
+            Assert.That(parsed.GetAlgorithms().Length, Is.EqualTo(6));
+            Assert.That(vector.GetPreferredAeadAlgorithms().Length, Is.EqualTo(12));
+        }
+
+        [Test]
         public void RoundTripEncryptionDecryptionTests()
         {
             AeadAlgorithmTag[] aeadAlgs = new AeadAlgorithmTag[]{

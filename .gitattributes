@@ -23,6 +23,11 @@
 *.bat      text eol=crlf
 *.cmd      text eol=crlf
 
+# Declare files that will always have LF line endings on checkout (run inside Linux containers).
+*.sh          text eol=lf
+*.Dockerfile  text eol=lf
+Dockerfile    text eol=lf
+
 # Denote all files that are truly binary and should not be modified.
 *.bin      binary
 *.cer      binary
